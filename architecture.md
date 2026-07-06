@@ -88,24 +88,6 @@ utils/
 
 views_index.html
 
-views_dashboard.html
-
-views_transaction.html
-
-views_report.html
-
-partials_navbar.html
-
-partials_footer.html
-
-css_style.html
-
-js_dashboard.html
-
-js_transaction.html
-
-js_report.html
-
 appsscript.json
 
 .clasp.json

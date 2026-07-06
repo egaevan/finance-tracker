@@ -23,14 +23,9 @@ const DEFAULT_CATEGORIES = [
 ];
 
 function doGet() {
-  const template = HtmlService.createTemplateFromFile('views_index');
-  return template.evaluate()
+  return HtmlService.createHtmlOutputFromFile('views_index')
     .setTitle('Finance Tracker')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
-}
-
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
 function setup(spreadsheetId) {

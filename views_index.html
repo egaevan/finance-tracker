@@ -2,63 +2,519 @@
 <html>
   <head>
     <base target="_top">
-    <?!= include('css_style') ?>
+    <style>
+      :root {
+        --primary: #2e7d32;
+        --primary-dark: #1b5e20;
+        --primary-light: #e8f5e9;
+        --income: #2e7d32;
+        --expense: #c62828;
+        --bg: #f5f7fa;
+        --card-bg: #ffffff;
+        --text: #212121;
+        --text-muted: #6b7280;
+        --border: #e5e7eb;
+        --radius: 14px;
+        --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg); color: var(--text); line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      .navbar { background: var(--primary); color: #fff; padding: 14px 16px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
+      .navbar h1 { font-size: 18px; font-weight: 600; }
+      .navbar nav { display: flex; gap: 8px; margin-top: 10px; }
+      .nav-link { flex: 1; text-align: center; padding: 10px 8px; color: #fff; text-decoration: none; border-radius: 8px; font-size: 14px; font-weight: 500; background: rgba(255,255,255,0.12); transition: background 0.2s; cursor: pointer; border: none; }
+      .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.28); }
+      .container { max-width: 720px; margin: 0 auto; padding: 16px; min-height: calc(100vh - 140px); }
+      .page { display: none; }
+      .page.active { display: block; }
+      .card { background: var(--card-bg); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); margin-bottom: 14px; }
+      .summary-card .label { color: var(--text-muted); font-size: 13px; margin-bottom: 6px; }
+      .summary-card .value { font-size: 24px; font-weight: 700; }
+      .summary-card.income .value { color: var(--income); }
+      .summary-card.expense .value { color: var(--expense); }
+      .summary-card.balance .value { color: var(--primary); }
+      .section-title { font-size: 16px; font-weight: 600; margin: 18px 0 10px; }
+      .transaction-list { list-style: none; }
+      .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+      .transaction-item:last-child { border-bottom: none; }
+      .transaction-item .info .category { font-weight: 600; font-size: 14px; }
+      .transaction-item .info .meta { font-size: 12px; color: var(--text-muted); }
+      .transaction-item .amount { font-weight: 600; font-size: 14px; }
+      .transaction-item .amount.income { color: var(--income); }
+      .transaction-item .amount.expense { color: var(--expense); }
+      .empty-state { text-align: center; color: var(--text-muted); padding: 24px; font-size: 14px; }
+      .form-group { margin-bottom: 16px; }
+      .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+      .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; background: #fff; color: var(--text); transition: border 0.2s; }
+      .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+      .form-group textarea { resize: vertical; min-height: 70px; }
+      .radio-group { display: flex; gap: 10px; }
+      .radio-group label { flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: 10px; text-align: center; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; margin: 0; }
+      .radio-group input[type="radio"] { display: none; }
+      .radio-group input[type="radio"]:checked + label { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+      .btn { display: block; width: 100%; padding: 15px; background: var(--primary); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+      .btn:hover { background: var(--primary-dark); }
+      .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+      .tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+      .tab { flex: 1; padding: 10px; text-align: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-muted); transition: all 0.2s; }
+      .tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+      .tab-panel { display: none; }
+      .tab-panel.active { display: block; }
+      .form-row { display: flex; gap: 10px; }
+      .form-row .form-group { flex: 1; }
+      .report-summary { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+      .report-summary .card { margin-bottom: 0; padding: 14px; }
+      .notification { padding: 14px; border-radius: 12px; margin-bottom: 14px; font-size: 14px; font-weight: 500; display: none; }
+      .notification.show { display: block; }
+      .notification.success { background: var(--primary-light); color: var(--primary-dark); border: 1px solid var(--primary); }
+      .notification.error { background: #ffebee; color: var(--expense); border: 1px solid var(--expense); }
+      .error-text { color: var(--expense); font-size: 12px; margin-top: 4px; display: none; }
+      .error-text.show { display: block; }
+      .form-group.invalid input, .form-group.invalid select, .form-group.invalid textarea { border-color: var(--expense); }
+      .spinner { display: none; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+      .spinner.show { display: inline-block; }
+      .spinner.dark { border-color: rgba(0,0,0,0.15); border-top-color: var(--primary); }
+      .inline-loader { display: none; text-align: center; padding: 32px; color: var(--text-muted); font-size: 14px; }
+      .inline-loader.show { display: block; }
+      .error-banner { display: none; padding: 14px; border-radius: 12px; background: #ffebee; color: var(--expense); border: 1px solid var(--expense); margin-bottom: 14px; font-size: 14px; }
+      .error-banner.show { display: flex; justify-content: space-between; align-items: center; }
+      .error-banner .retry-btn { background: none; border: none; color: var(--expense); font-weight: 600; cursor: pointer; text-decoration: underline; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .footer { text-align: center; padding: 16px; color: var(--text-muted); font-size: 12px; }
+      @media (min-width: 600px) {
+        .navbar h1 { font-size: 20px; }
+        .summary-card .value { font-size: 28px; }
+        .report-summary { grid-template-columns: repeat(3, 1fr); }
+      }
+    </style>
   </head>
   <body>
-    <?!= include('partials_navbar') ?>
+    <div class="navbar">
+      <h1>Personal Finance</h1>
+      <nav>
+        <button class="nav-link active" data-page="dashboard">Dashboard</button>
+        <button class="nav-link" data-page="transaction">Transaction</button>
+        <button class="nav-link" data-page="report">Report</button>
+      </nav>
+    </div>
 
     <div class="container">
       <div id="page-dashboard" class="page active">
-        <?!= include('views_dashboard') ?>
+        <div class="error-banner" id="dashboard-error">
+          <span class="error-message"></span>
+          <button class="retry-btn">Coba lagi</button>
+        </div>
+        <div class="inline-loader" id="dashboard-loader">
+          <div class="spinner dark show"></div>
+        </div>
+        <div class="card summary-card balance">
+          <div class="label">Saldo</div>
+          <div class="value" id="dashboard-balance">Rp 0</div>
+        </div>
+        <div class="card summary-card income">
+          <div class="label">Income Bulan Ini</div>
+          <div class="value" id="dashboard-income">Rp 0</div>
+        </div>
+        <div class="card summary-card expense">
+          <div class="label">Expense Bulan Ini</div>
+          <div class="value" id="dashboard-expense">Rp 0</div>
+        </div>
+        <div class="section-title">5 Transaksi Terakhir</div>
+        <div class="card">
+          <ul class="transaction-list" id="dashboard-recent">
+            <li class="empty-state">Belum ada transaksi</li>
+          </ul>
+        </div>
       </div>
 
       <div id="page-transaction" class="page">
-        <?!= include('views_transaction') ?>
+        <div class="notification" id="transaction-notification"></div>
+        <form id="transaction-form" novalidate>
+          <div class="form-group">
+            <label for="trx-date">Tanggal</label>
+            <input type="date" id="trx-date" name="date">
+            <div class="error-text" id="error-trx-date"></div>
+          </div>
+          <div class="form-group">
+            <label>Jenis</label>
+            <div class="radio-group">
+              <input type="radio" id="type-income" name="type" value="Income">
+              <label for="type-income">Income</label>
+              <input type="radio" id="type-expense" name="type" value="Expense">
+              <label for="type-expense">Expense</label>
+            </div>
+            <div class="error-text" id="error-type"></div>
+          </div>
+          <div class="form-group">
+            <label for="trx-category">Kategori</label>
+            <select id="trx-category" name="category">
+              <option value="">Pilih kategori</option>
+            </select>
+            <div class="error-text" id="error-trx-category"></div>
+          </div>
+          <div class="form-group">
+            <label for="trx-amount">Nominal</label>
+            <input type="number" id="trx-amount" name="amount" min="1" placeholder="0">
+            <div class="error-text" id="error-trx-amount"></div>
+          </div>
+          <div class="form-group">
+            <label for="trx-description">Deskripsi</label>
+            <textarea id="trx-description" name="description" placeholder="Catatan (opsional)"></textarea>
+          </div>
+          <button type="submit" class="btn" id="trx-save-btn">
+            <span id="trx-save-text">Simpan</span>
+            <span class="spinner" id="trx-spinner"></span>
+          </button>
+        </form>
       </div>
 
       <div id="page-report" class="page">
-        <?!= include('views_report') ?>
+        <div class="error-banner" id="report-error">
+          <span class="error-message"></span>
+          <button class="retry-btn">Coba lagi</button>
+        </div>
+        <div class="inline-loader" id="report-loader">
+          <div class="spinner dark show"></div>
+        </div>
+        <div class="tabs">
+          <button class="tab active" data-tab="daily">Daily</button>
+          <button class="tab" data-tab="monthly">Monthly</button>
+          <button class="tab" data-tab="range">Range Date</button>
+        </div>
+        <div id="panel-daily" class="tab-panel active">
+          <div class="form-group">
+            <label for="daily-date">Tanggal</label>
+            <input type="date" id="daily-date" name="daily-date">
+          </div>
+          <button class="btn" id="daily-btn">Tampilkan</button>
+        </div>
+        <div id="panel-monthly" class="tab-panel">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="monthly-month">Bulan</label>
+              <select id="monthly-month">
+                <option value="1">Januari</option><option value="2">Februari</option>
+                <option value="3">Maret</option><option value="4">April</option>
+                <option value="5">Mei</option><option value="6">Juni</option>
+                <option value="7">Juli</option><option value="8">Agustus</option>
+                <option value="9">September</option><option value="10">Oktober</option>
+                <option value="11">November</option><option value="12">Desember</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="monthly-year">Tahun</label>
+              <input type="number" id="monthly-year" placeholder="2026">
+            </div>
+          </div>
+          <button class="btn" id="monthly-btn">Tampilkan</button>
+        </div>
+        <div id="panel-range" class="tab-panel">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="range-start">Tanggal Awal</label>
+              <input type="date" id="range-start">
+            </div>
+            <div class="form-group">
+              <label for="range-end">Tanggal Akhir</label>
+              <input type="date" id="range-end">
+            </div>
+          </div>
+          <button class="btn" id="range-btn">Tampilkan</button>
+        </div>
+        <div id="report-result" style="margin-top: 20px;"></div>
       </div>
     </div>
 
-    <?!= include('partials_footer') ?>
-
-    <?!= include('js_dashboard') ?>
-    <?!= include('js_transaction') ?>
-    <?!= include('js_report') ?>
+    <div class="footer">
+      <p>Personal Finance Tracker</p>
+    </div>
 
     <script>
-      function navigateTo(page) {
-        var pages = document.querySelectorAll('.page');
-        for (var i = 0; i < pages.length; i++) {
-          pages[i].classList.remove('active');
-        }
-        document.getElementById('page-' + page).classList.add('active');
-
-        var links = document.querySelectorAll('.nav-link');
-        for (var j = 0; j < links.length; j++) {
-          links[j].classList.toggle('active', links[j].getAttribute('data-page') === page);
-        }
-
-        if (page === 'dashboard' && typeof loadDashboard === 'function') {
-          loadDashboard();
-        }
-        if (page === 'report' && typeof loadReport === 'function') {
-          loadReport();
-        }
+      // === Shared Utilities ===
+      function formatRupiah(amount) {
+        var n = Number(amount) || 0;
+        return 'Rp ' + n.toLocaleString('id-ID');
       }
 
-      document.addEventListener('DOMContentLoaded', function () {
-        var links = document.querySelectorAll('.nav-link');
-        for (var i = 0; i < links.length; i++) {
-          links[i].addEventListener('click', function () {
-            navigateTo(this.getAttribute('data-page'));
-          });
-        }
+      function formatDate(dateValue) {
+        if (!dateValue) return '-';
+        var d = new Date(dateValue);
+        if (isNaN(d.getTime())) return String(dateValue);
+        return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+      }
 
-        if (typeof loadDashboard === 'function') {
-          loadDashboard();
+      function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      function renderTransactionList(containerId, transactions) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        if (!transactions || transactions.length === 0) {
+          container.innerHTML = '<li class="empty-state">Belum ada transaksi</li>';
+          return;
         }
+        var html = '';
+        for (var i = 0; i < transactions.length; i++) {
+          var t = transactions[i];
+          var sign = t.type === 'Income' ? '+' : '-';
+          var cls = t.type === 'Income' ? 'income' : 'expense';
+          html += '<li class="transaction-item"><div class="info"><div class="category">' + escapeHtml(t.category) + '</div><div class="meta">' + formatDate(t.date) + (t.description ? ' - ' + escapeHtml(t.description) : '') + '</div></div><div class="amount ' + cls + '">' + sign + ' ' + formatRupiah(t.amount) + '</div></li>';
+        }
+        container.innerHTML = html;
+      }
+
+      // === Dashboard ===
+      function showDashboardLoader(show) {
+        var el = document.getElementById('dashboard-loader');
+        if (el) el.classList.toggle('show', show);
+      }
+
+      function showDashboardError(message) {
+        var el = document.getElementById('dashboard-error');
+        if (el) { el.querySelector('.error-message').textContent = message; el.classList.add('show'); }
+      }
+
+      function hideDashboardError() {
+        var el = document.getElementById('dashboard-error');
+        if (el) el.classList.remove('show');
+      }
+
+      function loadDashboard() {
+        hideDashboardError();
+        showDashboardLoader(true);
+        google.script.run
+          .withSuccessHandler(function (result) {
+            showDashboardLoader(false);
+            if (!result || !result.success) { showDashboardError('Gagal memuat data'); return; }
+            var d = result.data;
+            document.getElementById('dashboard-balance').textContent = formatRupiah(d.balance);
+            document.getElementById('dashboard-income').textContent = formatRupiah(d.monthlyIncome);
+            document.getElementById('dashboard-expense').textContent = formatRupiah(d.monthlyExpense);
+            renderTransactionList('dashboard-recent', d.recentTransactions);
+          })
+          .withFailureHandler(function (err) {
+            showDashboardLoader(false);
+            showDashboardError(err.message || 'Terjadi kesalahan koneksi');
+          })
+          .getDashboard();
+      }
+
+      // === Transaction Form ===
+      function clearValidationErrors() {
+        document.querySelectorAll('#transaction-form .form-group').forEach(function (g) { g.classList.remove('invalid'); });
+        document.querySelectorAll('#transaction-form .error-text').forEach(function (e) { e.textContent = ''; e.classList.remove('show'); });
+      }
+
+      function showFieldError(field, message) {
+        var el = document.getElementById(field);
+        if (el) { var fg = el.closest('.form-group'); if (fg) fg.classList.add('invalid'); }
+        var err = document.getElementById('error-' + field);
+        if (err) { err.textContent = message; err.classList.add('show'); }
+      }
+
+      function validateTransactionForm() {
+        clearValidationErrors();
+        var valid = true;
+        var date = document.getElementById('trx-date').value;
+        if (!date) { showFieldError('trx-date', 'Tanggal wajib diisi'); valid = false; }
+        var type = document.querySelector('input[name="type"]:checked');
+        if (!type) { showFieldError('type', 'Jenis transaksi wajib dipilih'); valid = false; }
+        var category = document.getElementById('trx-category').value;
+        if (!category) { showFieldError('trx-category', 'Kategori wajib dipilih'); valid = false; }
+        var amount = document.getElementById('trx-amount').value;
+        if (!amount) { showFieldError('trx-amount', 'Nominal wajib diisi'); valid = false; }
+        else if (Number(amount) <= 0) { showFieldError('trx-amount', 'Nominal harus lebih dari 0'); valid = false; }
+        return valid;
+      }
+
+      function showTransactionNotification(message, isError) {
+        var el = document.getElementById('transaction-notification');
+        if (!el) return;
+        el.textContent = message;
+        el.className = 'notification show ' + (isError ? 'error' : 'success');
+        setTimeout(function () { el.classList.remove('show'); }, 4000);
+      }
+
+      function setSaveButtonLoading(loading) {
+        var btn = document.getElementById('trx-save-btn');
+        var text = document.getElementById('trx-save-text');
+        var spinner = document.getElementById('trx-spinner');
+        if (btn) btn.disabled = loading;
+        if (text) text.style.display = loading ? 'none' : '';
+        if (spinner) spinner.classList.toggle('show', loading);
+      }
+
+      function loadCategoriesByType() {
+        var typeEl = document.querySelector('input[name="type"]:checked');
+        var catEl = document.getElementById('trx-category');
+        if (!catEl) return;
+        catEl.innerHTML = '<option value="">Pilih kategori</option>';
+        if (!typeEl) return;
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success || !result.data) return;
+            result.data.forEach(function (c) {
+              var opt = document.createElement('option');
+              opt.value = c.category;
+              opt.textContent = c.category;
+              catEl.appendChild(opt);
+            });
+          })
+          .withFailureHandler(function () { showTransactionNotification('Gagal memuat kategori', true); })
+          .getCategories(typeEl.value);
+      }
+
+      function resetTransactionForm() {
+        var form = document.getElementById('transaction-form');
+        if (form) form.reset();
+        clearValidationErrors();
+        document.getElementById('trx-date').value = new Date().toISOString().split('T')[0];
+        loadCategoriesByType();
+      }
+
+      function initTransactionForm() {
+        document.getElementById('trx-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('type-expense').checked = true;
+        document.querySelectorAll('input[name="type"]').forEach(function (r) { r.addEventListener('change', loadCategoriesByType); });
+        loadCategoriesByType();
+        document.getElementById('transaction-form').addEventListener('submit', function (e) {
+          e.preventDefault();
+          if (!validateTransactionForm()) return;
+          var typeEl = document.querySelector('input[name="type"]:checked');
+          var data = {
+            date: document.getElementById('trx-date').value,
+            type: typeEl ? typeEl.value : '',
+            category: document.getElementById('trx-category').value,
+            amount: document.getElementById('trx-amount').value,
+            description: document.getElementById('trx-description').value
+          };
+          setSaveButtonLoading(true);
+          google.script.run
+            .withSuccessHandler(function (result) {
+              setSaveButtonLoading(false);
+              if (!result || !result.success) { showTransactionNotification(result ? (result.error || 'Gagal menyimpan') : 'Terjadi kesalahan', true); return; }
+              showTransactionNotification('Transaksi berhasil disimpan', false);
+              resetTransactionForm();
+              loadDashboard();
+            })
+            .withFailureHandler(function (err) {
+              setSaveButtonLoading(false);
+              showTransactionNotification(err.message || 'Terjadi kesalahan koneksi', true);
+            })
+            .saveTransaction(data);
+        });
+      }
+
+      // === Report ===
+      var currentReportTab = 'daily';
+
+      function showReportLoader(show) {
+        var el = document.getElementById('report-loader');
+        if (el) el.classList.toggle('show', show);
+      }
+
+      function showReportError(message) {
+        var el = document.getElementById('report-error');
+        if (el) { el.querySelector('.error-message').textContent = message; el.classList.add('show'); }
+      }
+
+      function hideReportError() {
+        var el = document.getElementById('report-error');
+        if (el) el.classList.remove('show');
+      }
+
+      function renderReportResult(data) {
+        var container = document.getElementById('report-result');
+        if (!container) return;
+        if (!data || !data.transactions || data.transactions.length === 0) {
+          container.innerHTML = '<div class="report-summary"><div class="card"><div class="label">Income</div><div class="value" style="color:var(--income);">' + formatRupiah(0) + '</div></div><div class="card"><div class="label">Expense</div><div class="value" style="color:var(--expense);">' + formatRupiah(0) + '</div></div><div class="card"><div class="label">Saldo</div><div class="value" style="color:var(--primary);">' + formatRupiah(0) + '</div></div></div><div class="card"><ul class="transaction-list"><li class="empty-state">Tidak ada transaksi</li></ul></div>';
+          return;
+        }
+        var html = '<div class="report-summary"><div class="card"><div class="label">Income</div><div class="value" style="color:var(--income);">' + formatRupiah(data.income) + '</div></div><div class="card"><div class="label">Expense</div><div class="value" style="color:var(--expense);">' + formatRupiah(data.expense) + '</div></div><div class="card"><div class="label">Saldo</div><div class="value" style="color:var(--primary);">' + formatRupiah(data.balance) + '</div></div></div><div class="card"><ul class="transaction-list">';
+        data.transactions.forEach(function (t) {
+          var sign = t.type === 'Income' ? '+' : '-';
+          var cls = t.type === 'Income' ? 'income' : 'expense';
+          html += '<li class="transaction-item"><div class="info"><div class="category">' + escapeHtml(t.category) + '</div><div class="meta">' + formatDate(t.date) + (t.description ? ' - ' + escapeHtml(t.description) : '') + '</div></div><div class="amount ' + cls + '">' + sign + ' ' + formatRupiah(t.amount) + '</div></li>';
+        });
+        html += '</ul></div>';
+        container.innerHTML = html;
+      }
+
+      function loadDailyReport() {
+        var date = document.getElementById('daily-date').value;
+        if (!date) { alert('Pilih tanggal'); return; }
+        hideReportError(); showReportLoader(true);
+        google.script.run
+          .withSuccessHandler(function (r) { showReportLoader(false); if (r && r.success) renderReportResult(r.data); else showReportError('Gagal memuat laporan'); })
+          .withFailureHandler(function (e) { showReportLoader(false); showReportError(e.message || 'Kesalahan koneksi'); })
+          .getDailyReport(date);
+      }
+
+      function loadMonthlyReport() {
+        var month = document.getElementById('monthly-month').value;
+        var year = document.getElementById('monthly-year').value;
+        if (!month || !year) { alert('Pilih bulan dan tahun'); return; }
+        hideReportError(); showReportLoader(true);
+        google.script.run
+          .withSuccessHandler(function (r) { showReportLoader(false); if (r && r.success) renderReportResult(r.data); else showReportError('Gagal memuat laporan'); })
+          .withFailureHandler(function (e) { showReportLoader(false); showReportError(e.message || 'Kesalahan koneksi'); })
+          .getMonthlyReport(month, year);
+      }
+
+      function loadRangeReport() {
+        var start = document.getElementById('range-start').value;
+        var end = document.getElementById('range-end').value;
+        if (!start || !end) { alert('Pilih tanggal awal dan akhir'); return; }
+        hideReportError(); showReportLoader(true);
+        google.script.run
+          .withSuccessHandler(function (r) { showReportLoader(false); if (r && r.success) renderReportResult(r.data); else showReportError('Gagal memuat laporan'); })
+          .withFailureHandler(function (e) { showReportLoader(false); showReportError(e.message || 'Kesalahan koneksi'); })
+          .getRangeReport(start, end);
+      }
+
+      function initReportTabs() {
+        document.querySelectorAll('.tabs .tab').forEach(function (tab) {
+          tab.addEventListener('click', function () {
+            currentReportTab = this.getAttribute('data-tab');
+            document.querySelectorAll('.tabs .tab').forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === currentReportTab); });
+            document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.toggle('active', p.id === 'panel-' + currentReportTab); });
+          });
+        });
+        document.getElementById('daily-btn').addEventListener('click', loadDailyReport);
+        document.getElementById('monthly-btn').addEventListener('click', loadMonthlyReport);
+        document.getElementById('range-btn').addEventListener('click', loadRangeReport);
+        var now = new Date();
+        document.getElementById('monthly-month').value = String(now.getMonth() + 1);
+        document.getElementById('monthly-year').value = String(now.getFullYear());
+      }
+
+      // === Init ===
+      document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.nav-link').forEach(function (link) {
+          link.addEventListener('click', function () {
+            var page = this.getAttribute('data-page');
+            document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
+            document.getElementById('page-' + page).classList.add('active');
+            document.querySelectorAll('.nav-link').forEach(function (l) { l.classList.toggle('active', l.getAttribute('data-page') === page); });
+            if (page === 'dashboard') loadDashboard();
+          });
+        });
+        document.querySelector('#dashboard-error .retry-btn').addEventListener('click', loadDashboard);
+        document.querySelector('#report-error .retry-btn').addEventListener('click', function () {
+          if (currentReportTab === 'daily') loadDailyReport();
+          else if (currentReportTab === 'monthly') loadMonthlyReport();
+          else loadRangeReport();
+        });
+        initTransactionForm();
+        initReportTabs();
+        loadDashboard();
       });
     </script>
   </body>
