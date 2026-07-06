@@ -14,6 +14,15 @@
     return day + '/' + month + '/' + year;
   }
 
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   function renderTransactionList(containerId, transactions) {
     var container = document.getElementById(containerId);
     if (!container) return;
@@ -39,16 +48,28 @@
     container.innerHTML = html;
   }
 
-  function escapeHtml(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+  function showDashboardLoader(show) {
+    var loader = document.getElementById('dashboard-loader');
+    if (loader) loader.classList.toggle('show', show);
+  }
+
+  function showDashboardError(message) {
+    var banner = document.getElementById('dashboard-error');
+    if (banner) {
+      banner.querySelector('.error-message').textContent = message;
+      banner.classList.add('show');
+    }
+  }
+
+  function hideDashboardError() {
+    var banner = document.getElementById('dashboard-error');
+    if (banner) banner.classList.remove('show');
   }
 
   function loadDashboard() {
+    hideDashboardError();
+    showDashboardLoader(true);
+
     var balanceEl = document.getElementById('dashboard-balance');
     var incomeEl = document.getElementById('dashboard-income');
     var expenseEl = document.getElementById('dashboard-expense');
@@ -59,13 +80,16 @@
     if (expenseEl) expenseEl.textContent = formatRupiah(0);
     if (recentEl) recentEl.innerHTML = '<li class="empty-state">Belum ada transaksi</li>';
 
-    if (typeof getDashboardData === 'function') {
-      getDashboardData(handleDashboardResult);
-    }
+    google.script.run
+      .withSuccessHandler(handleDashboardResult)
+      .withFailureHandler(handleDashboardError)
+      .getDashboard();
   }
 
   function handleDashboardResult(result) {
+    showDashboardLoader(false);
     if (!result || !result.success) {
+      showDashboardError(result ? (result.error || 'Gagal memuat data') : 'Gagal memuat data');
       return;
     }
     var data = result.data;
@@ -79,4 +103,17 @@
 
     renderTransactionList('dashboard-recent', data.recentTransactions);
   }
+
+  function handleDashboardError(err) {
+    showDashboardLoader(false);
+    showDashboardError(err.message || 'Terjadi kesalahan koneksi');
+  }
+
+  function initDashboard() {
+    var retryBtn = document.querySelector('#dashboard-error .retry-btn');
+    if (retryBtn) retryBtn.addEventListener('click', loadDashboard);
+    loadDashboard();
+  }
+
+  document.addEventListener('DOMContentLoaded', initDashboard);
 </script>

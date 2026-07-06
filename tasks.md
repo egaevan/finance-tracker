@@ -99,9 +99,9 @@ Categories
 
 # Phase 4 - Integration
 
-- [ ] google.script.run
-- [ ] Loading Spinner
-- [ ] Error Handling
+- [x] google.script.run
+- [x] Loading Spinner
+- [x] Error Handling
 
 ---
 

@@ -33,6 +33,24 @@
     }
   }
 
+  function showReportLoader(show) {
+    var loader = document.getElementById('report-loader');
+    if (loader) loader.classList.toggle('show', show);
+  }
+
+  function showReportError(message) {
+    var banner = document.getElementById('report-error');
+    if (banner) {
+      banner.querySelector('.error-message').textContent = message;
+      banner.classList.add('show');
+    }
+  }
+
+  function hideReportError() {
+    var banner = document.getElementById('report-error');
+    if (banner) banner.classList.remove('show');
+  }
+
   function renderReportResult(data) {
     var container = document.getElementById('report-result');
     if (!container) return;
@@ -84,11 +102,21 @@
       alert('Pilih tanggal');
       return;
     }
-    if (typeof getDailyReportData === 'function') {
-      getDailyReportData(date, function (result) {
+
+    hideReportError();
+    showReportLoader(true);
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        showReportLoader(false);
         if (result && result.success) renderReportResult(result.data);
-      });
-    }
+        else showReportError(result ? (result.error || 'Gagal memuat laporan') : 'Gagal memuat laporan');
+      })
+      .withFailureHandler(function (err) {
+        showReportLoader(false);
+        showReportError(err.message || 'Terjadi kesalahan koneksi');
+      })
+      .getDailyReport(date);
   }
 
   function loadMonthlyReport() {
@@ -100,11 +128,21 @@
       alert('Pilih bulan dan tahun');
       return;
     }
-    if (typeof getMonthlyReportData === 'function') {
-      getMonthlyReportData(month, year, function (result) {
+
+    hideReportError();
+    showReportLoader(true);
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        showReportLoader(false);
         if (result && result.success) renderReportResult(result.data);
-      });
-    }
+        else showReportError(result ? (result.error || 'Gagal memuat laporan') : 'Gagal memuat laporan');
+      })
+      .withFailureHandler(function (err) {
+        showReportLoader(false);
+        showReportError(err.message || 'Terjadi kesalahan koneksi');
+      })
+      .getMonthlyReport(month, year);
   }
 
   function loadRangeReport() {
@@ -116,12 +154,34 @@
       alert('Pilih tanggal awal dan akhir');
       return;
     }
-    if (typeof getRangeReportData === 'function') {
-      getRangeReportData(start, end, function (result) {
+
+    hideReportError();
+    showReportLoader(true);
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        showReportLoader(false);
         if (result && result.success) renderReportResult(result.data);
-      });
-    }
+        else showReportError(result ? (result.error || 'Gagal memuat laporan') : 'Gagal memuat laporan');
+      })
+      .withFailureHandler(function (err) {
+        showReportLoader(false);
+        showReportError(err.message || 'Terjadi kesalahan koneksi');
+      })
+      .getRangeReport(start, end);
   }
 
-  document.addEventListener('DOMContentLoaded', initReportTabs);
+  function initReport() {
+    var retryBtn = document.querySelector('#report-error .retry-btn');
+    if (retryBtn) retryBtn.addEventListener('click', function () {
+      if (currentReportTab === 'daily') loadDailyReport();
+      else if (currentReportTab === 'monthly') loadMonthlyReport();
+      else loadRangeReport();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    initReportTabs();
+    initReport();
+  });
 </script>

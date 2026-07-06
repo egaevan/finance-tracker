@@ -12,9 +12,9 @@
   }
 
   function showFieldError(field, message) {
-    var group = document.getElementById(field);
-    if (!group) return;
-    var formGroup = group.closest('.form-group');
+    var el = document.getElementById(field);
+    if (!el) return;
+    var formGroup = el.closest('.form-group');
     var errorEl = document.getElementById('error-' + field);
     if (formGroup) formGroup.classList.add('invalid');
     if (errorEl) {
@@ -94,8 +94,8 @@
     catEl.innerHTML = '<option value="">Pilih kategori</option>';
     if (!typeEl) return;
 
-    if (typeof getCategoryList === 'function') {
-      getCategoryList(typeEl.value, function (result) {
+    google.script.run
+      .withSuccessHandler(function (result) {
         if (!result || !result.success || !result.data) return;
         for (var i = 0; i < result.data.length; i++) {
           var opt = document.createElement('option');
@@ -103,8 +103,11 @@
           opt.textContent = result.data[i].category;
           catEl.appendChild(opt);
         }
-      });
-    }
+      })
+      .withFailureHandler(function (err) {
+        showTransactionNotification('Gagal memuat kategori', true);
+      })
+      .getCategories(typeEl.value);
   }
 
   function initTransactionForm() {
@@ -133,9 +136,10 @@
         };
 
         setSaveButtonLoading(true);
-        if (typeof saveTransactionData === 'function') {
-          saveTransactionData(data, handleSaveResult);
-        }
+        google.script.run
+          .withSuccessHandler(handleSaveResult)
+          .withFailureHandler(handleSaveError)
+          .saveTransaction(data);
       });
     }
   }
@@ -153,6 +157,11 @@
     showTransactionNotification('Transaksi berhasil disimpan', false);
     resetTransactionForm();
     if (typeof loadDashboard === 'function') loadDashboard();
+  }
+
+  function handleSaveError(err) {
+    setSaveButtonLoading(false);
+    showTransactionNotification(err.message || 'Terjadi kesalahan koneksi', true);
   }
 
   document.addEventListener('DOMContentLoaded', initTransactionForm);
