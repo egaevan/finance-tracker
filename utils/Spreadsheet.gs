@@ -7,33 +7,25 @@ const TRANSACTION_FIELDS = ['id', 'date', 'type', 'category', 'description', 'am
 const CATEGORY_FIELDS = ['type', 'category'];
 
 function getSpreadsheet_() {
-  const props = PropertiesService.getScriptProperties();
-  let id = props.getProperty('SPREADSHEET_ID');
-  if (id) {
-    try {
-      return SpreadsheetApp.openById(id);
-    } catch (e) {
-      props.deleteProperty('SPREADSHEET_ID');
-    }
-  }
-  const ss = SpreadsheetApp.create('Finance Tracker');
-  props.setProperty('SPREADSHEET_ID', ss.getId());
-  createSheet_(ss, SHEET_TRANSACTIONS, TRANSACTIONS_HEADERS);
-  const categoriesSheet = createSheet_(ss, SHEET_CATEGORIES, CATEGORIES_HEADERS);
-  seedCategories_(categoriesSheet);
-  Logger.log('Auto-created spreadsheet: ' + ss.getUrl());
-  return ss;
-}
-
-function setSpreadsheetId(id) {
-  PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', id);
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
 }
 
 function getSheet_(name) {
   const ss = getSpreadsheet_();
-  const sheet = ss.getSheetByName(name);
+  let sheet = ss.getSheetByName(name);
   if (!sheet) {
-    throw new Error('Sheet not found: ' + name);
+    if (name === SHEET_TRANSACTIONS) {
+      sheet = ss.insertSheet(name);
+      sheet.getRange(1, 1, 1, TRANSACTIONS_HEADERS.length).setValues([TRANSACTIONS_HEADERS]).setFontWeight('bold');
+      sheet.setFrozenRows(1);
+    } else if (name === SHEET_CATEGORIES) {
+      sheet = ss.insertSheet(name);
+      sheet.getRange(1, 1, 1, CATEGORIES_HEADERS.length).setValues([CATEGORIES_HEADERS]).setFontWeight('bold');
+      sheet.setFrozenRows(1);
+      seedCategories_(sheet);
+    } else {
+      throw new Error('Sheet not found: ' + name);
+    }
   }
   return sheet;
 }

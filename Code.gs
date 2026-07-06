@@ -4,6 +4,7 @@
  * Phase 3 - Frontend
  */
 
+const SPREADSHEET_ID = '1m9PMkSD2AOre6GCP1CzlhM_JuqWP3CcTY1wWBTbfD1I';
 const SHEET_TRANSACTIONS = 'Transactions';
 const SHEET_CATEGORIES = 'Categories';
 
@@ -28,15 +29,8 @@ function doGet() {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
-function setup(spreadsheetId) {
-  let ss;
-  if (spreadsheetId) {
-    ss = SpreadsheetApp.openById(spreadsheetId);
-  } else {
-    ss = SpreadsheetApp.create('Finance Tracker');
-  }
-
-  setSpreadsheetId(ss.getId());
+function setup() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
   createSheet_(ss, SHEET_TRANSACTIONS, TRANSACTIONS_HEADERS);
   const categoriesSheet = createSheet_(ss, SHEET_CATEGORIES, CATEGORIES_HEADERS);
@@ -45,7 +39,6 @@ function setup(spreadsheetId) {
 
   const url = ss.getUrl();
   Logger.log('Spreadsheet URL: ' + url);
-  Logger.log('Spreadsheet ID: ' + ss.getId());
   return 'Setup complete. Spreadsheet: ' + url;
 }
 
