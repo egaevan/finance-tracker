@@ -109,27 +109,27 @@ Categories
 
 ## Income
 
-- [ ] Save Income
+- [x] Save Income
 
 ## Expense
 
-- [ ] Save Expense
+- [x] Save Expense
 
 ## Dashboard
 
-- [ ] Balance
-- [ ] Monthly Summary
+- [x] Balance
+- [x] Monthly Summary
 
 ## Report
 
-- [ ] Daily
-- [ ] Monthly
-- [ ] Range Date
+- [x] Daily
+- [x] Monthly
+- [x] Range Date
 
 ---
 
 # Phase 6 - Deployment
 
-- [ ] Deploy Web App
-- [ ] Test Desktop
-- [ ] Test Mobile
+- [x] Deploy Web App
+- [x] Test Desktop
+- [x] Test Mobile

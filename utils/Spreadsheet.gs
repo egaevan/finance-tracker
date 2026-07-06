@@ -38,7 +38,7 @@ function getRowsAsObjects_(sheet, fields) {
   return values.map(function (row) {
     const obj = {};
     for (let i = 0; i < fields.length; i++) {
-      obj[fields[i]] = row[i];
+      obj[fields[i]] = toDateString(row[i]);
     }
     return obj;
   });
