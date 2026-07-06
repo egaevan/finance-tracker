@@ -69,3 +69,42 @@ function buildReport_(transactions, periodStart, periodEnd) {
   if (periodEnd) result.periodEnd = periodEnd;
   return result;
 }
+
+function getCategoryReport(category, filterType, dateFilter) {
+  try {
+    if (!category) {
+      return errorResponse('Category is required');
+    }
+    let transactions = readTransactions().filter(function (t) {
+      return t.category === category;
+    });
+    if (filterType && filterType !== 'all') {
+      transactions = transactions.filter(function (t) {
+        return t.type.toLowerCase() === filterType.toLowerCase();
+      });
+    }
+    if (dateFilter) {
+      if (dateFilter.period === 'period') {
+        const period = getCurrentPeriod_();
+        transactions = transactions.filter(function (t) {
+          return isInDateRange_(t.date, period.start, period.end);
+        });
+      } else if (dateFilter.period === 'daily' && dateFilter.date) {
+        transactions = transactions.filter(function (t) {
+          return isSameDay_(t.date, dateFilter.date);
+        });
+      } else if (dateFilter.period === 'monthly' && dateFilter.month && dateFilter.year) {
+        transactions = transactions.filter(function (t) {
+          return isInMonth_(t.date, dateFilter.year, dateFilter.month);
+        });
+      } else if (dateFilter.period === 'range' && dateFilter.startDate && dateFilter.endDate) {
+        transactions = transactions.filter(function (t) {
+          return isInDateRange_(t.date, dateFilter.startDate, dateFilter.endDate);
+        });
+      }
+    }
+    return successResponse(buildReport_(transactions));
+  } catch (e) {
+    return errorResponse(e.message);
+  }
+}

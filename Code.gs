@@ -51,6 +51,7 @@ function setup() {
   const categoriesSheet = createSheet_(ss, SHEET_CATEGORIES, CATEGORIES_HEADERS);
 
   seedCategories_(categoriesSheet);
+  deleteUnusedSheets_(ss);
 
   const url = ss.getUrl();
   Logger.log('Spreadsheet URL: ' + url);
@@ -62,11 +63,10 @@ function createSheet_(ss, sheetName, headers) {
 
   if (!sheet) {
     sheet = ss.insertSheet(sheetName);
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+    sheet.setFrozenRows(1);
   }
 
-  sheet.clear();
-  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
-  sheet.setFrozenRows(1);
   return sheet;
 }
 
@@ -75,4 +75,11 @@ function seedCategories_(sheet) {
     return;
   }
   sheet.getRange(2, 1, DEFAULT_CATEGORIES.length, DEFAULT_CATEGORIES[0].length).setValues(DEFAULT_CATEGORIES);
+}
+
+function deleteUnusedSheets_(ss) {
+  const sheet = ss.getSheetByName('Sheet1');
+  if (sheet && ss.getSheets().length > 1) {
+    ss.deleteSheet(sheet);
+  }
 }

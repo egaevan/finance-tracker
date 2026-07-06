@@ -189,6 +189,7 @@
           <button class="tab" data-tab="daily">Daily</button>
           <button class="tab" data-tab="monthly">Monthly</button>
           <button class="tab" data-tab="range">Range Date</button>
+          <button class="tab" data-tab="category">Kategori</button>
         </div>
         <div id="panel-period" class="tab-panel active">
           <div class="card" style="margin-bottom: 16px;">
@@ -236,6 +237,70 @@
             </div>
           </div>
           <button class="btn" id="range-btn">Tampilkan</button>
+        </div>
+        <div id="panel-category" class="tab-panel">
+          <div class="form-group">
+            <label for="category-type">Jenis</label>
+            <select id="category-type">
+              <option value="all">Semua</option>
+              <option value="income">Income</option>
+              <option value="expense">Expense</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="category-name">Kategori</label>
+            <select id="category-name">
+              <option value="">Pilih kategori</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="category-date-filter">Filter Tanggal</label>
+            <select id="category-date-filter">
+              <option value="">Semua Waktu</option>
+              <option value="period">Periode Aktif</option>
+              <option value="daily">Hari Tertentu</option>
+              <option value="monthly">Bulan Tertentu</option>
+              <option value="range">Range Tanggal</option>
+            </select>
+          </div>
+          <div id="category-daily-fields" style="display: none;">
+            <div class="form-group">
+              <label for="category-daily-date">Tanggal</label>
+              <input type="date" id="category-daily-date">
+            </div>
+          </div>
+          <div id="category-monthly-fields" style="display: none;">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="category-monthly-month">Bulan</label>
+                <select id="category-monthly-month">
+                  <option value="1">Januari</option><option value="2">Februari</option>
+                  <option value="3">Maret</option><option value="4">April</option>
+                  <option value="5">Mei</option><option value="6">Juni</option>
+                  <option value="7">Juli</option><option value="8">Agustus</option>
+                  <option value="9">September</option><option value="10">Oktober</option>
+                  <option value="11">November</option><option value="12">Desember</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="category-monthly-year">Tahun</label>
+                <input type="number" id="category-monthly-year" placeholder="2026">
+              </div>
+            </div>
+          </div>
+          <div id="category-range-fields" style="display: none;">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="category-range-start">Tanggal Awal</label>
+                <input type="date" id="category-range-start">
+              </div>
+              <div class="form-group">
+                <label for="category-range-end">Tanggal Akhir</label>
+                <input type="date" id="category-range-end">
+              </div>
+            </div>
+          </div>
+          <button class="btn" id="category-btn">Tampilkan</button>
         </div>
         <div id="report-result" style="margin-top: 20px;"></div>
       </div>
@@ -511,6 +576,60 @@
           .getPeriodReport();
       }
 
+      function loadCategoriesForReport() {
+        var typeEl = document.getElementById('category-type');
+        var catEl = document.getElementById('category-name');
+        var type = typeEl ? typeEl.value : 'all';
+        catEl.innerHTML = '<option value="">Pilih kategori</option>';
+        google.script.run
+          .withSuccessHandler(function (result) {
+            if (!result || !result.success || !result.data) return;
+            result.data.forEach(function (c) {
+              var opt = document.createElement('option');
+              opt.value = c.category;
+              opt.textContent = c.category;
+              catEl.appendChild(opt);
+            });
+          })
+          .withFailureHandler(function () {})
+          .getCategories(type === 'all' ? '' : type);
+      }
+
+      function updateCategoryDateFields() {
+        var filter = document.getElementById('category-date-filter').value;
+        document.getElementById('category-daily-fields').style.display = filter === 'daily' ? 'block' : 'none';
+        document.getElementById('category-monthly-fields').style.display = filter === 'monthly' ? 'block' : 'none';
+        document.getElementById('category-range-fields').style.display = filter === 'range' ? 'block' : 'none';
+      }
+
+      function loadCategoryReport() {
+        var category = document.getElementById('category-name').value;
+        if (!category) { alert('Pilih kategori'); return; }
+        var filterType = document.getElementById('category-type').value;
+        var dateFilterType = document.getElementById('category-date-filter').value;
+        var dateFilter = null;
+        if (dateFilterType) {
+          dateFilter = { period: dateFilterType };
+          if (dateFilterType === 'daily') {
+            dateFilter.date = document.getElementById('category-daily-date').value;
+            if (!dateFilter.date) { alert('Pilih tanggal'); return; }
+          } else if (dateFilterType === 'monthly') {
+            dateFilter.month = document.getElementById('category-monthly-month').value;
+            dateFilter.year = document.getElementById('category-monthly-year').value;
+            if (!dateFilter.month || !dateFilter.year) { alert('Pilih bulan dan tahun'); return; }
+          } else if (dateFilterType === 'range') {
+            dateFilter.startDate = document.getElementById('category-range-start').value;
+            dateFilter.endDate = document.getElementById('category-range-end').value;
+            if (!dateFilter.startDate || !dateFilter.endDate) { alert('Pilih tanggal awal dan akhir'); return; }
+          }
+        }
+        hideReportError(); showReportLoader(true);
+        google.script.run
+          .withSuccessHandler(function (r) { showReportLoader(false); if (r && r.success) renderReportResult(r.data); else showReportError(r ? (r.error || 'Gagal memuat laporan') : 'Terjadi kesalahan'); })
+          .withFailureHandler(function (e) { showReportLoader(false); showReportError(e.message || 'Kesalahan koneksi'); })
+          .getCategoryReport(category, filterType, dateFilter);
+      }
+
       function initReportTabs() {
         document.querySelectorAll('.tabs .tab').forEach(function (tab) {
           tab.addEventListener('click', function () {
@@ -523,10 +642,16 @@
         document.getElementById('daily-btn').addEventListener('click', loadDailyReport);
         document.getElementById('monthly-btn').addEventListener('click', loadMonthlyReport);
         document.getElementById('range-btn').addEventListener('click', loadRangeReport);
+        document.getElementById('category-btn').addEventListener('click', loadCategoryReport);
+        document.getElementById('category-type').addEventListener('change', loadCategoriesForReport);
+        document.getElementById('category-date-filter').addEventListener('change', updateCategoryDateFields);
         var now = new Date();
         document.getElementById('monthly-month').value = String(now.getMonth() + 1);
         document.getElementById('monthly-year').value = String(now.getFullYear());
+        document.getElementById('category-monthly-month').value = String(now.getMonth() + 1);
+        document.getElementById('category-monthly-year').value = String(now.getFullYear());
         loadPeriodReport();
+        loadCategoriesForReport();
       }
 
       // === Init ===
@@ -545,7 +670,8 @@
           if (currentReportTab === 'period') loadPeriodReport();
           else if (currentReportTab === 'daily') loadDailyReport();
           else if (currentReportTab === 'monthly') loadMonthlyReport();
-          else loadRangeReport();
+          else if (currentReportTab === 'range') loadRangeReport();
+          else if (currentReportTab === 'category') loadCategoryReport();
         });
         initTransactionForm();
         initReportTabs();

@@ -114,7 +114,7 @@ Report Page → ReportService → Filter Data → Aggregate → Return JSON
 | Dashboard | `getDashboard()` - Returns period-based summary (28th-27th cycle) |
 | Category | `getCategories(type)` |
 | Transaction | `saveTransaction(data)` |
-| Report | `getPeriodReport()`, `getDailyReport(date)`, `getMonthlyReport(month, year)`, `getRangeReport(startDate, endDate)` |
+| Report | `getPeriodReport()`, `getDailyReport(date)`, `getMonthlyReport(month, year)`, `getRangeReport(startDate, endDate)`, `getCategoryReport(category, filterType, dateFilter)` |
 
 ---
 
