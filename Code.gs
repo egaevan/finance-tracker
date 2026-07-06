@@ -30,6 +30,10 @@ function doGet() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+function getWebAppUrl() {
+  return ScriptApp.getService().getUrl();
+}
+
 function debug() {
   try {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);

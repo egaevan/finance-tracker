@@ -243,6 +243,7 @@
 
     <div class="footer">
       <p>Personal Finance Tracker</p>
+      <p id="webapp-url" style="margin-top: 6px; word-break: break-all;"></p>
     </div>
 
     <script>
@@ -549,7 +550,18 @@
         initTransactionForm();
         initReportTabs();
         loadDashboard();
+        loadWebAppUrl();
       });
+
+      function loadWebAppUrl() {
+        google.script.run
+          .withSuccessHandler(function (url) {
+            if (url) {
+              document.getElementById('webapp-url').textContent = url;
+            }
+          })
+          .getWebAppUrl();
+      }
     </script>
   </body>
 </html>
