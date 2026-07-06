@@ -76,6 +76,8 @@ services/
 
     CategoryService.gs
 
+    ReportService.gs
+
 utils/
 
     Spreadsheet.gs
@@ -106,13 +108,15 @@ css/
 
 js/
 
-    dashboard.html
+    dashboard.js.html
 
-    transaction.html
+    transaction.js.html
 
-    report.html
+    report.js.html
 
 appsscript.json
+
+.clasp.json
 ```
 
 ---

@@ -1,0 +1,9 @@
+{
+  "scriptId": "",
+  "rootDir": ".",
+  "filePushIgnore": [
+    "*.md",
+    ".git/*",
+    ".clasp.json"
+  ]
+}
