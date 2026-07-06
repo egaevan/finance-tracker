@@ -636,6 +636,9 @@
             currentReportTab = this.getAttribute('data-tab');
             document.querySelectorAll('.tabs .tab').forEach(function (t) { t.classList.toggle('active', t.getAttribute('data-tab') === currentReportTab); });
             document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.toggle('active', p.id === 'panel-' + currentReportTab); });
+            if (currentReportTab === 'category') {
+              loadCategoriesForReport();
+            }
           });
         });
         document.getElementById('period-btn').addEventListener('click', loadPeriodReport);
